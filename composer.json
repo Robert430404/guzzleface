@@ -1,0 +1,32 @@
+{
+  "name": "robert430404/guzzleface",
+  "description": "This is a library that helps you write guzzle clients using an OpenFeign like interface.",
+  "type": "library",
+  "require": {
+    "guzzlehttp/guzzle": "^6.3",
+    "doctrine/annotations": "^1.6",
+    "memio/memio": "^1.0"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "^7.4",
+    "mockery/mockery": "^1.2"
+  },
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Robert Joseph Cox Jr",
+      "email": "robert@studiorclv.com"
+    }
+  ],
+  "minimum-stability": "stable",
+  "autoload": {
+    "psr-4": {
+      "Robert430404\\GuzzleFace\\": "src/GuzzleFace"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Robert430404\\GuzzleFace\\Tests\\": "tests/GuzzleFace"
+    }
+  }
+}
