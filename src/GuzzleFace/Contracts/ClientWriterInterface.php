@@ -9,14 +9,37 @@ namespace Robert430404\GuzzleFace\Contracts;
  */
 interface ClientWriterInterface
 {
+    /**
+     * Sets the generation directory for the clients.
+     *
+     * @param string $generationDir
+     *
+     * @return ClientWriterInterface
+     */
     public function setGenerationDir(string $generationDir): ClientWriterInterface;
 
-    public function setInterface(string $interface): ClientWriterInterface;
+    /**
+     * Sets the namespace for the generated clients to use.
+     *
+     * @param string $namespace
+     *
+     * @return ClientWriterInterface
+     */
+    public function setGeneratedClientNamespace(string $namespace): ClientWriterInterface;
 
     /**
-     * Writes the clients to the provided directory.
+     * Sets the interface that we are going to be reflecting on to generate the client.
      *
-     * @return void
+     * @param string $interface
+     *
+     * @return ClientWriterInterface
      */
-    public function writeClients(): void;
+    public function setClientInterface(string $interface): ClientWriterInterface;
+
+    /**
+     * Writes the clients to the provided directory and returns the class namespace.
+     *
+     * @return string
+     */
+    public function writeClients(): string;
 }

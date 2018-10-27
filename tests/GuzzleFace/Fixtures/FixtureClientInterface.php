@@ -2,9 +2,10 @@
 
 namespace Robert430404\GuzzleFace\Tests\Fixtures;
 
+use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Psr7\Response;
 use Robert430404\GuzzleFace\Annotations\{
-    ApiName, BaseUrl, Method\Get, Request\Endpoint
+    Action, ApiName, BaseUrl, Method\Get, Request\Endpoint
 };
 
 /**
@@ -15,11 +16,13 @@ use Robert430404\GuzzleFace\Annotations\{
  *
  * @package Robert430404\GuzzleFace\Tests\Fixtures
  */
-interface FixtureClientInterface
+interface FixtureClientInterface extends ClientInterface
 {
     /**
-     * @Get
-     * @Endpoint(uri="resource")
+     * @Action(
+     *     method=@Get,
+     *     endpoint=@Endpoint(uri="/resource")
+     * )
      *
      * @return Response
      */
