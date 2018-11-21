@@ -10,7 +10,7 @@ use Throwable;
  *
  * @package Robert430404\GuzzleFace\Exceptions
  */
-class InvalidClientInterfaceProvided extends Exception implements Throwable
+class InvalidClientInterfaceProvidedException extends Exception implements Throwable
 {
     // Silence Is Golden
 }
