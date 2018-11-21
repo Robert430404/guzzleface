@@ -4,6 +4,7 @@ namespace Robert430404\GuzzleFace\Annotations;
 
 use Doctrine\Common\Annotations\Annotation;
 use Robert430404\GuzzleFace\Annotations\Method\Contracts\MethodAnnotationInterface;
+use Robert430404\GuzzleFace\Annotations\Request\Body;
 use Robert430404\GuzzleFace\Annotations\Request\Endpoint;
 
 /**
@@ -27,6 +28,11 @@ class Action extends Annotation
     public $endpoint;
 
     /**
+     * @var Body
+     */
+    public $body;
+
+    /**
      * @return string
      */
     public function getMethod(): string
@@ -40,5 +46,23 @@ class Action extends Annotation
     public function getEndpoint(): string
     {
         return $this->endpoint->getUri();
+    }
+
+    /**
+     * @return string
+     *
+     * @throws \Robert430404\GuzzleFace\Exceptions\NoBodyTypeProvidedException
+     */
+    public function getBodyType(): string
+    {
+        return $this->body->getBodyType();
+    }
+
+    /**
+     * @return string
+     */
+    public function getBodyParamName(): string
+    {
+        return $this->body->getName();
     }
 }

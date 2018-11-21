@@ -4,6 +4,7 @@ namespace Robert430404\GuzzleFace\Annotations\Method;
 
 use Doctrine\Common\Annotations\Annotation;
 use Robert430404\GuzzleFace\Annotations\Method\Contracts\MethodAnnotationInterface;
+use Robert430404\GuzzleFace\Enumerations\MethodEnumerations;
 
 /**
  * Class Post
@@ -24,6 +25,6 @@ class Post extends Annotation implements MethodAnnotationInterface
      */
     public function getHttpMethod(): string
     {
-        return 'POST';
+        return MethodEnumerations::HTTP_POST;
     }
 }
