@@ -9,8 +9,9 @@ use League\Flysystem\FilesystemInterface;
 use Memio\Memio\Config\Build;
 use GuzzleHttp\{Client, ClientInterface, Psr7\Response};
 use Robert430404\GuzzleFace\Annotations\Contracts\ConfigurationAnnotationInterface;
+use Robert430404\GuzzleFace\Contexts\ClassContext;
 use Robert430404\GuzzleFace\Exceptions\InvalidClientInterfaceProvidedException;
-use Robert430404\GuzzleFace\Factories\{FileFactory, MethodFactory};
+use Robert430404\GuzzleFace\Factories\{ConfigFactory, FileFactory, MethodFactory};
 
 /**
  * Class ClientBuilder
@@ -63,23 +64,14 @@ class ClientBuilder
             );
         }
 
-        $nameParts = explode('\\', $clientName);
-        $className = str_replace('Interface', '', end($nameParts));
-        $classFqns = "$clientNamespace\\$className";
-
+        $classContext = new ClassContext($clientName, $clientNamespace);
         $classAnnotations = $this->reader->getClassAnnotations(
-            $reflectionInstance = new ReflectionClass($clientName)
+            $reflectionInstance = new ReflectionClass(
+                $classContext->getClientName()
+            )
         );
 
-        /**
-         * Load up the global configuration from the class annotations.
-         *
-         * @var ConfigurationAnnotationInterface $annotation
-         */
-        foreach ($classAnnotations as $annotation) {
-            $clientConfig[$annotation->getConfigKey()] = $annotation->getValue();
-        }
-
+        $clientConfig = (new ConfigFactory($classAnnotations))->makeConfig();
         $validMethods = array_filter(
             $reflectionInstance->getMethods(),
             function (\ReflectionMethod $method) use ($clientName) {
@@ -106,21 +98,21 @@ class ClientBuilder
 
         $methods = (new MethodFactory($validMethods, $methodAnnotations))->makeMethods();
 
-        $file = (new FileFactory($className))
+        $file = (new FileFactory($classContext->getClass()))
             ->setImports($imports)
             ->setParent(Client::class)
             ->setInterfaces($implements)
             ->setMethods($methods)
-            ->setFullyQualifiedNameSpace($classFqns)
+            ->setFullyQualifiedNameSpace($classContext->getClassNameSpace())
             ->makeFile();
 
         $this
             ->clientWriter
             ->put(
-                $className . '.php',
+                "{$classContext->getClass()}.php",
                 Build::prettyPrinter()->generateCode($file)
             );
 
-        return new $classFqns($clientConfig ?? []);
+        return $classContext->getNewInstance($clientConfig ?? []);
     }
 }
