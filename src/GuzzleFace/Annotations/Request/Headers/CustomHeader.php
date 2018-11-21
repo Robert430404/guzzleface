@@ -14,21 +14,36 @@ use Robert430404\GuzzleFace\Enumerations\ConfigurationEnumerations;
  *
  * @package Robert430404\GuzzleFace\Annotations\Request\Headers
  */
-class ContentType extends Annotation implements ConfigurationAnnotationInterface
+class CustomHeader extends Annotation implements ConfigurationAnnotationInterface
 {
     /**
      * @Annotation\Required
      *
      * @var string
      */
-    public $type;
+    public $name;
+
+    /**
+     * @Annotation\Required
+     *
+     * @var string
+     */
+    public $body;
 
     /**
      * @return string
      */
-    public function getType(): string
+    public function getName(): string
     {
-        return $this->type;
+        return $this->name;
+    }
+
+    /**
+     * @return string
+     */
+    public function getBody(): string
+    {
+        return $this->body;
     }
 
     /**
@@ -39,7 +54,7 @@ class ContentType extends Annotation implements ConfigurationAnnotationInterface
     public function getValue()
     {
         return [
-            'Content-Type' => $this->getType(),
+            $this->getName() => $this->getBody(),
         ];
     }
 

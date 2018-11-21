@@ -14,9 +14,9 @@ interface ConfigurationAnnotationInterface
     /**
      * Returns the value that the configuration holds.
      *
-     * @return string
+     * @return mixed
      */
-    public function getValue(): string;
+    public function getValue();
 
     /**
      * Returns the corresponding guzzle configuration key.
