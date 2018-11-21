@@ -49,6 +49,14 @@ class Action extends Annotation
     }
 
     /**
+     * @return bool
+     */
+    public function hasBody(): bool
+    {
+        return $this->body !== null;
+    }
+
+    /**
      * @return string
      *
      * @throws \Robert430404\GuzzleFace\Exceptions\NoBodyTypeProvidedException

@@ -2,24 +2,15 @@
 
 namespace Robert430404\GuzzleFace;
 
-use Doctrine\Common\Annotations\Reader;
-use GuzzleHttp\Client;
-use GuzzleHttp\ClientInterface;
-use GuzzleHttp\Psr7\Request;
-use GuzzleHttp\Psr7\Response;
-use League\Flysystem\FilesystemInterface;
-use Memio\Memio\Config\Build;
-use Memio\Model\Contract;
-use Memio\Model\File;
-use Memio\Model\FullyQualifiedName;
-use Memio\Model\Method;
-use Memio\Model\Objekt;
-use Memio\Model\Property;
 use ReflectionClass;
 use ReflectionException;
-use Robert430404\GuzzleFace\Annotations\Action;
+use Doctrine\Common\Annotations\Reader;
+use League\Flysystem\FilesystemInterface;
+use Memio\Memio\Config\Build;
+use GuzzleHttp\{Client, ClientInterface, Psr7\Response};
 use Robert430404\GuzzleFace\Annotations\Contracts\ConfigurationAnnotationInterface;
-use Robert430404\GuzzleFace\Exceptions\InvalidClientInterfaceProvided;
+use Robert430404\GuzzleFace\Exceptions\InvalidClientInterfaceProvidedException;
+use Robert430404\GuzzleFace\Factories\{FileFactory, MethodFactory};
 
 /**
  * Class ClientBuilder
@@ -46,10 +37,8 @@ class ClientBuilder
      * @param Reader $reader
      * @param FilesystemInterface $clientWriter
      */
-    public function __construct(
-        Reader $reader,
-        FilesystemInterface $clientWriter
-    ) {
+    public function __construct(Reader $reader, FilesystemInterface $clientWriter)
+    {
         $this->reader = $reader;
         $this->clientWriter = $clientWriter;
     }
@@ -62,13 +51,14 @@ class ClientBuilder
      *
      * @return ClientInterface
      *
-     * @throws InvalidClientInterfaceProvided
+     * @throws InvalidClientInterfaceProvidedException
      * @throws ReflectionException
+     * @throws Exceptions\NoBodyTypeProvidedException
      */
     public function buildClient(string $clientName, string $clientNamespace): ClientInterface
     {
         if (!interface_exists($clientName)) {
-            throw new InvalidClientInterfaceProvided(
+            throw new InvalidClientInterfaceProvidedException(
                 "You did not provide an auto loaded client interface: {$clientName}."
             );
         }
@@ -77,12 +67,9 @@ class ClientBuilder
         $className = str_replace('Interface', '', end($nameParts));
         $classFqns = "$clientNamespace\\$className";
 
-        $reflectionInstance = new ReflectionClass($clientName);
-        $classAnnotations = $this
-            ->reader
-            ->getClassAnnotations($reflectionInstance);
-
-        $clientConfig = [];
+        $classAnnotations = $this->reader->getClassAnnotations(
+            $reflectionInstance = new ReflectionClass($clientName)
+        );
 
         /**
          * Load up the global configuration from the class annotations.
@@ -100,14 +87,32 @@ class ClientBuilder
             }
         );
 
-        $methods = $this->resolveMethods($validMethods);
-
-        $file = $this->buildFile(
-            $clientName,
-            $className,
-            $classFqns,
-            $methods
+        $methodAnnotations = array_map(
+            function (\ReflectionMethod $method) {
+                return $this->reader->getMethodAnnotations($method);
+            },
+            $validMethods
         );
+
+        $imports = [
+            Client::class,
+            Response::class,
+            $clientName,
+        ];
+
+        $implements = [
+            $clientName,
+        ];
+
+        $methods = (new MethodFactory($validMethods, $methodAnnotations))->makeMethods();
+
+        $file = (new FileFactory($className))
+            ->setImports($imports)
+            ->setParent(Client::class)
+            ->setInterfaces($implements)
+            ->setMethods($methods)
+            ->setFullyQualifiedNameSpace($classFqns)
+            ->makeFile();
 
         $this
             ->clientWriter
@@ -116,98 +121,6 @@ class ClientBuilder
                 Build::prettyPrinter()->generateCode($file)
             );
 
-        return new $classFqns($clientConfig);
-    }
-
-    /**
-     * Builds the file for writing.
-     *
-     * @param string $clientName
-     * @param string $className
-     * @param string $classFqns
-     * @param Method[] $methods
-     *
-     * @return File
-     */
-    private function buildFile(
-        string $clientName,
-        string $className,
-        string $classFqns,
-        array $methods
-    ): File {
-        $guzzle = new Objekt(Client::class);
-        $request = new Objekt(Request::class);
-        $response = new Objekt(Response::class);
-        $interface = new Contract($clientName);
-        $constructor = (new Method('__construct'))->setBody(
-            "        parent::__construct();"
-        );
-
-        $generatedClientClass = (new Objekt($classFqns))
-            ->extend($guzzle)
-            ->implement($interface)
-            ->addMethod($constructor);
-
-        foreach ($methods as $method) {
-            $generatedClientClass->addMethod($method);
-        }
-
-        return (new File($className))->setStructure(
-            $generatedClientClass
-        )->addFullyQualifiedName(
-            new FullyQualifiedName(
-                $guzzle->getFullyQualifiedName()
-            )
-        )->addFullyQualifiedName(
-            new FullyQualifiedName(
-                $request->getFullyQualifiedName()
-            )
-        )->addFullyQualifiedName(
-            new FullyQualifiedName(
-                $response->getFullyQualifiedName()
-            )
-        )->addFullyQualifiedName(
-            new FullyQualifiedName(
-                $interface->getFullyQualifiedName()
-            )
-        );
-    }
-
-    /**
-     * @param \ReflectionMethod[] $reflectionMethods
-     *
-     * @return Method[]
-     */
-    private function resolveMethods(array $reflectionMethods): array
-    {
-        foreach ($reflectionMethods as $reflectionMethod) {
-            $name = $reflectionMethod->getName();
-            $annotations = $this
-                ->reader
-                ->getMethodAnnotations(
-                    $reflectionMethod
-                );
-
-            /** @var Action $action */
-            $action = array_reduce($annotations, function ($carry, $annotation) {
-                if ($annotation instanceof Action) {
-                    return $annotation;
-                }
-
-                return $carry;
-            });
-
-            $methods[] = (new Method($name))->setBody(<<<EOT
-        return \$this->send(
-            new Request(
-                '{$action->getMethod()}', 
-                '{$action->getEndpoint()}'
-            )
-        );
-EOT
-            );
-        }
-
-        return $methods ?? [];
+        return new $classFqns($clientConfig ?? []);
     }
 }
