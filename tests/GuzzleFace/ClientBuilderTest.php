@@ -8,7 +8,6 @@ use GuzzleHttp\ClientInterface;
 use League\Flysystem\Adapter\Local;
 use League\Flysystem\Filesystem;
 use Robert430404\GuzzleFace\ClientBuilder;
-use Robert430404\GuzzleFace\ClientWriter;
 use Robert430404\GuzzleFace\Tests\Fixtures\FixtureClientInterface;
 
 /**
@@ -49,7 +48,8 @@ class ClientBuilderTest extends AbstractBaseTestCase
      * @test
      *
      * @throws \ReflectionException
-     * @throws \Robert430404\GuzzleFace\Exceptions\InvalidClientInterfaceProvided
+     * @throws \Robert430404\GuzzleFace\Exceptions\InvalidClientInterfaceProvidedException
+     * @throws \Robert430404\GuzzleFace\Exceptions\NoBodyTypeProvidedException
      */
     public function shouldBuildGuzzleClient()
     {
