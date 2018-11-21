@@ -4,28 +4,41 @@ namespace Robert430404\GuzzleFace\Tests\Fixtures;
 
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Psr7\Response;
-use Robert430404\GuzzleFace\Annotations\{Action,
-    ApiName,
-    BaseUrl,
-    Method\Delete,
-    Method\Get,
-    Method\Patch,
-    Method\Post,
-    Method\Put,
-    Request\Body,
-    Request\Endpoint};
+use Robert430404\GuzzleFace\Annotations\Action;
+use Robert430404\GuzzleFace\Annotations\ApiName;
+use Robert430404\GuzzleFace\Annotations\BaseUrl;
+use Robert430404\GuzzleFace\Annotations\Method\{Delete, Get, Options, Patch, Post, Put};
+use Robert430404\GuzzleFace\Annotations\Request\{Body,
+    Endpoint,
+    Headers,
+    Headers\AuthBasic,
+    Headers\AuthBearer,
+    Headers\ContentType,
+    Headers\CustomHeader,
+    Headers\UserAgent};
 
 /**
  * Interface FixtureClientInterface
  *
- * @BaseUrl(host="http://localhost:8080/")
+ * @BaseUrl(host="http://localhost:8080")
  * @ApiName(name="Fixture Client")
+ * @AuthBasic(username="test", password="test")
+ * @AuthBearer(token="test-token-here")
+ * @UserAgent(agent="roberts-test-agent")
+ * @ContentType(type="application/json")
+ * @CustomHeader(name="x-test-header", body="test-body")
+ * @CustomHeader(name="x-test-header-2", body="test-body")
  *
  * @package Robert430404\GuzzleFace\Tests\Fixtures
  */
 interface FixtureClientInterface extends ClientInterface
 {
     /**
+     * @Headers(headers={
+     *     @AuthBasic(username="override", password="override"),
+     *     @CustomHeader(name="x-override", body="test")
+     * })
+     *
      * @Action(
      *     method=@Get,
      *     endpoint=@Endpoint(uri="/resource")
@@ -111,4 +124,14 @@ interface FixtureClientInterface extends ClientInterface
      * @return Response
      */
     public function patch(string $body): Response;
+
+    /**
+     * @Action(
+     *     method=@Options,
+     *     endpoint=@Endpoint(uri="/resource")
+     * )
+     *
+     * @return Response
+     */
+    public function options(): Response;
 }
