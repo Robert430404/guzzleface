@@ -4,18 +4,10 @@ namespace Robert430404\GuzzleFace\Tests\Integration\Fixtures;
 
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Psr7\Response;
-use Robert430404\GuzzleFace\Annotations\Action;
-use Robert430404\GuzzleFace\Annotations\ApiName;
-use Robert430404\GuzzleFace\Annotations\BaseUrl;
+use Robert430404\GuzzleFace\Annotations\{Action, ApiName, BaseUrl};
 use Robert430404\GuzzleFace\Annotations\Method\{Delete, Get, Options, Patch, Post, Put};
-use Robert430404\GuzzleFace\Annotations\Request\{Body,
-    Endpoint,
-    Headers,
-    Headers\AuthBasic,
-    Headers\AuthBearer,
-    Headers\ContentType,
-    Headers\CustomHeader,
-    Headers\UserAgent};
+use Robert430404\GuzzleFace\Annotations\Request\{Body, Endpoint, Headers};
+use Robert430404\GuzzleFace\Annotations\Request\Headers\{AuthBasic, AuthBearer, ContentType, CustomHeader, UserAgent};
 
 /**
  * Interface FixtureClientInterface

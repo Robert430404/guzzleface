@@ -2,6 +2,7 @@
 
 namespace Robert430404\GuzzleFace;
 
+use Memio\Model\Phpdoc\ParameterTag;
 use ReflectionClass;
 use ReflectionException;
 use Doctrine\Common\Annotations\Reader;
@@ -37,6 +38,11 @@ class ClientBuilder
     private $configOverrides;
 
     /**
+     * @var bool
+     */
+    private $cache = false;
+
+    /**
      * ClientBuilder constructor.
      *
      * @param Reader $reader
@@ -51,6 +57,20 @@ class ClientBuilder
         $this->reader = $reader;
         $this->clientWriter = $clientWriter;
         $this->configOverrides = $configOverrides;
+    }
+
+    /**
+     * Toggles cache functionality.
+     *
+     * @param bool $cache
+     *
+     * @return ClientBuilder
+     */
+    public function cache(bool $cache): ClientBuilder
+    {
+        $this->cache = $cache;
+
+        return $this;
     }
 
     /**
@@ -74,6 +94,11 @@ class ClientBuilder
         }
 
         $classContext = new ClassContext($clientName, $clientNamespace);
+
+        if ($this->shouldPullFromCache($classContext)) {
+            return $classContext->getNewInstance($this->configOverrides);
+        }
+
         $classAnnotations = $this->reader->getClassAnnotations(
             $reflectionInstance = new ReflectionClass(
                 $classContext->getClientName()
@@ -124,5 +149,25 @@ class ClientBuilder
             );
 
         return $classContext->getNewInstance($this->configOverrides);
+    }
+
+    /**
+     * Checks to see if we can serve the client from cache and not regenerate it.
+     *
+     * @param ClassContext $context
+     *
+     * @return bool
+     */
+    private function shouldPullFromCache(ClassContext $context): bool
+    {
+        if (!$this->cache) {
+            return false;
+        }
+
+        if ($this->clientWriter->has("{$context->getClass()}.php")) {
+            return true;
+        }
+
+        return false;
     }
 }

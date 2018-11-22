@@ -4,9 +4,11 @@ namespace Robert430404\GuzzleFace\Tests;
 
 use Doctrine\Common\Annotations\{AnnotationReader, AnnotationRegistry};
 use GuzzleHttp\ClientInterface;
-use League\Flysystem\{Adapter\Local, Filesystem};
+use League\Flysystem\{Adapter\Local, FileNotFoundException, Filesystem};
+use ReflectionException;
 use Robert430404\GuzzleFace\ClientBuilder;
 use Robert430404\GuzzleFace\Exceptions\InvalidClientInterfaceProvidedException;
+use Robert430404\GuzzleFace\Exceptions\NoBodyTypeProvidedException;
 use Robert430404\GuzzleFace\Tests\Integration\Fixtures\FixtureClientInterface;
 
 /**
@@ -22,6 +24,11 @@ class ClientBuilderTest extends AbstractBaseTestCase
     private $builder;
 
     /**
+     * @var Filesystem
+     */
+    private $filesystem;
+
+    /**
      * Sets up each test run.
      *
      * @throws \Doctrine\Common\Annotations\AnnotationException
@@ -33,7 +40,7 @@ class ClientBuilderTest extends AbstractBaseTestCase
         // Enable Composer Autoloading Of Annotations While We Test
         AnnotationRegistry::registerLoader('class_exists');
 
-        $fileSystem = new Filesystem(
+        $this->filesystem = $fileSystem = new Filesystem(
             new Local(__DIR__ . '/Generated')
         );
 
@@ -46,14 +53,15 @@ class ClientBuilderTest extends AbstractBaseTestCase
     /**
      * @test
      *
-     * @throws \ReflectionException
+     * @throws ReflectionException
      * @throws \Robert430404\GuzzleFace\Exceptions\InvalidClientInterfaceProvidedException
-     * @throws \Robert430404\GuzzleFace\Exceptions\NoBodyTypeProvidedException
+     * @throws NoBodyTypeProvidedException
      */
     public function shouldBuildAndInstantiateTheClient()
     {
         $client = $this
             ->builder
+            ->cache(false)
             ->buildClient(
                 FixtureClientInterface::class,
                 'Robert430404\\GuzzleFace\\Tests\\Integration\\Generated'
@@ -67,8 +75,57 @@ class ClientBuilderTest extends AbstractBaseTestCase
      * @test
      *
      * @throws InvalidClientInterfaceProvidedException
-     * @throws \ReflectionException
-     * @throws \Robert430404\GuzzleFace\Exceptions\NoBodyTypeProvidedException
+     * @throws ReflectionException
+     * @throws NoBodyTypeProvidedException
+     */
+    public function shouldPullClientFromCacheWhenAvailable()
+    {
+        $this->assertTrue($this->filesystem->has('FixtureClient.php'));
+
+        $client = $this
+            ->builder
+            ->cache(true)
+            ->buildClient(
+                FixtureClientInterface::class,
+                'Robert430404\\GuzzleFace\\Tests\\Integration\\Generated'
+            );
+
+        $this->assertInstanceOf(ClientInterface::class, $client);
+        $this->assertInstanceOf(FixtureClientInterface::class, $client);
+    }
+
+    /**
+     * @test
+     *
+     * @throws InvalidClientInterfaceProvidedException
+     * @throws ReflectionException
+     * @throws NoBodyTypeProvidedException
+     * @throws FileNotFoundException
+     */
+    public function shouldRegenerateClientWhenNotCached()
+    {
+        $this->filesystem->delete('FixtureClient.php');
+
+        $this->assertTrue(!$this->filesystem->has('FixtureClient.php'));
+
+        $client = $this
+            ->builder
+            ->cache(true)
+            ->buildClient(
+                FixtureClientInterface::class,
+                'Robert430404\\GuzzleFace\\Tests\\Integration\\Generated'
+            );
+
+        $this->assertInstanceOf(ClientInterface::class, $client);
+        $this->assertInstanceOf(FixtureClientInterface::class, $client);
+    }
+
+    /**
+     * @test
+     *
+     * @throws InvalidClientInterfaceProvidedException
+     * @throws ReflectionException
+     * @throws NoBodyTypeProvidedException
      */
     public function shouldGetInvalidClientInterfaceProvidedException()
     {
