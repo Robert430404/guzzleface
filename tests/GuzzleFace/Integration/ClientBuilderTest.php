@@ -2,13 +2,12 @@
 
 namespace Robert430404\GuzzleFace\Tests;
 
-use Doctrine\Common\Annotations\AnnotationReader;
-use Doctrine\Common\Annotations\AnnotationRegistry;
+use Doctrine\Common\Annotations\{AnnotationReader, AnnotationRegistry};
 use GuzzleHttp\ClientInterface;
-use League\Flysystem\Adapter\Local;
-use League\Flysystem\Filesystem;
+use League\Flysystem\{Adapter\Local, Filesystem};
 use Robert430404\GuzzleFace\ClientBuilder;
-use Robert430404\GuzzleFace\Tests\Fixtures\FixtureClientInterface;
+use Robert430404\GuzzleFace\Exceptions\InvalidClientInterfaceProvidedException;
+use Robert430404\GuzzleFace\Tests\Integration\Fixtures\FixtureClientInterface;
 
 /**
  * Class ClientBuilderTest
@@ -51,16 +50,30 @@ class ClientBuilderTest extends AbstractBaseTestCase
      * @throws \Robert430404\GuzzleFace\Exceptions\InvalidClientInterfaceProvidedException
      * @throws \Robert430404\GuzzleFace\Exceptions\NoBodyTypeProvidedException
      */
-    public function shouldBuildGuzzleClient()
+    public function shouldBuildAndInstantiateTheClient()
     {
         $client = $this
             ->builder
             ->buildClient(
                 FixtureClientInterface::class,
-                'Robert430404\\GuzzleFace\\Tests\\Generated'
+                'Robert430404\\GuzzleFace\\Tests\\Integration\\Generated'
             );
 
         $this->assertInstanceOf(ClientInterface::class, $client);
         $this->assertInstanceOf(FixtureClientInterface::class, $client);
+    }
+
+    /**
+     * @test
+     *
+     * @throws InvalidClientInterfaceProvidedException
+     * @throws \ReflectionException
+     * @throws \Robert430404\GuzzleFace\Exceptions\NoBodyTypeProvidedException
+     */
+    public function shouldGetInvalidClientInterfaceProvidedException()
+    {
+        $this->expectException(InvalidClientInterfaceProvidedException::class);
+
+        $this->builder->buildClient('bad-interface', 'bad-namespace-destination');
     }
 }

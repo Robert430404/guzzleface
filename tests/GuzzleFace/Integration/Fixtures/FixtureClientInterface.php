@@ -1,6 +1,6 @@
 <?php
 
-namespace Robert430404\GuzzleFace\Tests\Fixtures;
+namespace Robert430404\GuzzleFace\Tests\Integration\Fixtures;
 
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Psr7\Response;
@@ -49,6 +49,12 @@ interface FixtureClientInterface extends ClientInterface
     public function get(): Response;
 
     /**
+     * @Headers(headers={
+     *     @AuthBearer(token="robs-test-token"),
+     *     @CustomHeader(name="x-override", body="test"),
+     *     @UserAgent(agent="test-agent")
+     * })
+     *
      * @Action(
      *     method=@Post,
      *     endpoint=@Endpoint(uri="/resource"),
@@ -90,7 +96,7 @@ interface FixtureClientInterface extends ClientInterface
     /**
      * @Action(
      *     method=@Delete,
-     *     endpoint=@Endpoint(uri="/resource")
+     *     endpoint=@Endpoint(uri="/resource/{record}")
      * )
      *
      * @param string $record
@@ -102,28 +108,31 @@ interface FixtureClientInterface extends ClientInterface
     /**
      * @Action(
      *     method=@Put,
-     *     endpoint=@Endpoint(uri="/resource"),
+     *     endpoint=@Endpoint(uri="/resource/{record}/resource2/{record2}"),
      *     body=@Body(json=true, name="body")
      * )
      *
      * @param string $body
+     * @param string $record
+     * @param string $record2
      *
      * @return Response
      */
-    public function put(string $body): Response;
+    public function put(string $body, string $record, string $record2): Response;
 
     /**
      * @Action(
      *     method=@Patch,
-     *     endpoint=@Endpoint(uri="/resource"),
+     *     endpoint=@Endpoint(uri="/resource/{record}"),
      *     body=@Body(json=true, name="body")
      * )
      *
      * @param string $body
+     * @param string $record
      *
      * @return Response
      */
-    public function patch(string $body): Response;
+    public function patch(string $body, string $record): Response;
 
     /**
      * @Action(

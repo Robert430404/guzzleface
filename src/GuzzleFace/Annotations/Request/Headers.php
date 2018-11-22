@@ -21,14 +21,6 @@ class Headers extends Annotation
     public $headers;
 
     /**
-     * @return bool
-     */
-    public function hasHeaders(): bool
-    {
-        return $this->headers !== null;
-    }
-
-    /**
      * @return ConfigurationAnnotationInterface[]
      */
     public function getHeaders(): array

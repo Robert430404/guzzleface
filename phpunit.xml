@@ -9,6 +9,7 @@
             <directory>./</directory>
             <exclude>
                 <directory>./docs</directory>
+                <directory>./tests</directory>
             </exclude>
         </whitelist>
     </filter>

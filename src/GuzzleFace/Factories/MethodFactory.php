@@ -17,6 +17,16 @@ use Robert430404\GuzzleFace\Enumerations\ConfigurationEnumerations;
 class MethodFactory
 {
     /**
+     * These are the various regex used for parsing the generated code.
+     *
+     * @const string
+     */
+    const NEWLINE_REGEX = '/' . PHP_EOL . '\s*' . PHP_EOL . '/';
+    const ARRAY_INDENTATION_REGEX = '/(=>)([ ])(\r|\n)([ ]*)/';
+    const VAR_CONVERSION_REGEX = '/(\')(\$[a-zA-Z]*)(\')/';
+    const ARRAY_INDEX_REGEX = '/\d+ => /';
+
+    /**
      * @var \ReflectionMethod[]
      */
     private $reflectionMethods = [];
@@ -27,15 +37,25 @@ class MethodFactory
     private $annotations = [];
 
     /**
+     * @var array
+     */
+    private $clientConfig = [];
+
+    /**
      * MethodFactory constructor.
      *
      * @param array $methods
      * @param array $annotations
+     * @param array $clientConfig
      */
-    public function __construct(array $methods, array $annotations)
-    {
+    public function __construct(
+        array $methods,
+        array $annotations,
+        array $clientConfig
+    ) {
         $this->reflectionMethods = $methods;
         $this->annotations = $annotations;
+        $this->clientConfig = $clientConfig;
     }
 
     /**
@@ -45,10 +65,12 @@ class MethodFactory
      */
     public function makeMethods(): array
     {
+        $stringClientConfig = $this->stringifyOptions($this->clientConfig);
+
         $methods[] = (new Method('__construct'))
             ->addArgument(new Argument('array', 'config = []'))
             ->setBody(
-                $this->padBody('parent::__construct($config);')
+                $this->padBody("parent::__construct(array_merge({$stringClientConfig}, \$config));")
             );
 
         foreach ($this->reflectionMethods as $key => $reflectionMethod) {
@@ -94,7 +116,7 @@ class MethodFactory
 
             $methods[] = $classMethod->setBody(
                 $this->padBody(
-                    "return \$this->request('{$action->getMethod()}', '{$action->getEndpoint()}', {$stringOptions});"
+                    "return \$this->request('{$action->getMethod()}', \"{$action->getEndpoint()}\", {$stringOptions});"
                 )
             );
         }
@@ -139,13 +161,13 @@ class MethodFactory
 
         switch ($action->getBodyType()) {
             case BodyEnumerations::JSON_BODY :
-                $requestOptions['body'] = '$body';
+                $requestOptions['body'] = "\${$action->getBodyParamName()}";
                 break;
             case BodyEnumerations::MULTI_PART_BODY :
-                $requestOptions['multipart'] = '$body';
+                $requestOptions['multipart'] = "\${$action->getBodyParamName()}";
                 break;
             case BodyEnumerations::FORM_PARAMS_BODY :
-                $requestOptions['form_params'] = '$body';
+                $requestOptions['form_params'] = "\${$action->getBodyParamName()}";
                 break;
         }
 
@@ -163,10 +185,6 @@ class MethodFactory
     {
         $headerBag = [];
 
-        if (!$headers->hasHeaders()) {
-            return $headerBag;
-        }
-
         foreach ($headers->getHeaders() as $header) {
             $headerBag[] = $header->getValue();
         }
@@ -176,6 +194,8 @@ class MethodFactory
 
     /**
      * Converts the request options from an array to a string for use in the code generator.
+     *
+     * TODO: Find a way to convert to short syntax
      *
      * @param array $options
      *
@@ -187,22 +207,21 @@ class MethodFactory
         $stringify = var_export($options, true);
 
         // Convert vars from string literals to there non literal counterparts.
-        $stringify = preg_replace('/(\')(\$[a-zA-Z]*)(\')/', '$2', $stringify);
+        $stringify = preg_replace(static::VAR_CONVERSION_REGEX, '$2', $stringify);
 
         // remove index from non-associative arrays
-        $stringify = preg_replace('/\d+ => /', '', $stringify);
+        $stringify = preg_replace(static::ARRAY_INDEX_REGEX, '', $stringify);
 
-        // Remove all of the line breaks from the generated code.
-        $stringify = preg_replace('/\r?\n|\r/', '', $stringify);
+        // Remove doubled line breaks
+        $stringify = preg_replace(static::NEWLINE_REGEX, PHP_EOL, $stringify);
 
-        // Remove the spaces from the generated options.
-        $stringify = str_replace(' ', '', $stringify);
-
-        // Convert to short array syntax
-        // TODO: Find better way of doing this conversion.
-        $stringify = str_replace('array()', '[]', $stringify);
-        $stringify = str_replace('array(', '[', $stringify);
-        $stringify = str_replace(',)', ',]', $stringify);
+        // Setup multi-line formatting for the generated options.
+        $stringify = str_replace(' ', '  ', $stringify);
+        $stringify = str_replace('Bearer  ', 'Bearer ', $stringify);
+        $stringify = str_replace('  =>  ', ' => ', $stringify);
+        $stringify = str_replace('array  (', 'array(', $stringify);
+        $stringify = $this->padMultiLineString($stringify);
+        $stringify = preg_replace(static::ARRAY_INDENTATION_REGEX, '=> ', $stringify);
 
         return $stringify;
     }
@@ -223,5 +242,28 @@ class MethodFactory
             " ",
             STR_PAD_LEFT
         );
+    }
+
+    /**
+     * Handles padding a multi line string for the generated code.
+     *
+     * @param string $body
+     * @param int $amount
+     *
+     * @return string
+     */
+    private function padMultiLineString(string $body, int $amount = 8): string
+    {
+        $strings = explode(PHP_EOL, $body);
+
+        foreach ($strings as $key => $string) {
+            if ($key === 0) { // Don't pad the array opening
+                continue;
+            }
+
+            $strings[$key] = $this->padBody($string);
+        }
+
+        return implode(PHP_EOL, $strings);
     }
 }

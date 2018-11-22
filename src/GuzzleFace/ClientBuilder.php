@@ -8,9 +8,8 @@ use Doctrine\Common\Annotations\Reader;
 use League\Flysystem\FilesystemInterface;
 use Memio\Memio\Config\Build;
 use GuzzleHttp\{Client, ClientInterface, Psr7\Response};
-use Robert430404\GuzzleFace\Annotations\Contracts\ConfigurationAnnotationInterface;
 use Robert430404\GuzzleFace\Contexts\ClassContext;
-use Robert430404\GuzzleFace\Exceptions\InvalidClientInterfaceProvidedException;
+use Robert430404\GuzzleFace\Exceptions\{InvalidClientInterfaceProvidedException, NoBodyTypeProvidedException};
 use Robert430404\GuzzleFace\Factories\{ConfigFactory, FileFactory, MethodFactory};
 
 /**
@@ -33,15 +32,25 @@ class ClientBuilder
     private $clientWriter;
 
     /**
+     * @var array
+     */
+    private $configOverrides;
+
+    /**
      * ClientBuilder constructor.
      *
      * @param Reader $reader
      * @param FilesystemInterface $clientWriter
+     * @param array $configOverrides
      */
-    public function __construct(Reader $reader, FilesystemInterface $clientWriter)
-    {
+    public function __construct(
+        Reader $reader,
+        FilesystemInterface $clientWriter,
+        array $configOverrides = []
+    ) {
         $this->reader = $reader;
         $this->clientWriter = $clientWriter;
+        $this->configOverrides = $configOverrides;
     }
 
     /**
@@ -54,7 +63,7 @@ class ClientBuilder
      *
      * @throws InvalidClientInterfaceProvidedException
      * @throws ReflectionException
-     * @throws Exceptions\NoBodyTypeProvidedException
+     * @throws NoBodyTypeProvidedException
      */
     public function buildClient(string $clientName, string $clientNamespace): ClientInterface
     {
@@ -96,7 +105,8 @@ class ClientBuilder
             $clientName,
         ];
 
-        $methods = (new MethodFactory($validMethods, $methodAnnotations))->makeMethods();
+        $methods = (new MethodFactory($validMethods, $methodAnnotations, $clientConfig))
+            ->makeMethods();
 
         $file = (new FileFactory($classContext->getClass()))
             ->setImports($imports)
@@ -113,6 +123,6 @@ class ClientBuilder
                 Build::prettyPrinter()->generateCode($file)
             );
 
-        return $classContext->getNewInstance($clientConfig ?? []);
+        return $classContext->getNewInstance($this->configOverrides);
     }
 }
