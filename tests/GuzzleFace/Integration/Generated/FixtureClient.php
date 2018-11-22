@@ -51,8 +51,7 @@ class FixtureClient extends Client implements FixtureClientInterface
         return $this->request('GET', "/resource", array(
             'headers' => array(
                 'x-override' => 'test',
-                'override',
-                'override',
+                'Authorization' => 'Basic b3ZlcnJpZGU6b3ZlcnJpZGU=',
             ),
         ));
     }

@@ -220,6 +220,11 @@ class MethodFactory
         $headerBag = [];
 
         foreach ($headers->getHeaders() as $header) {
+            if ($header instanceof Headers\AuthBasic) {
+                $headerBag['Authorization'] = 'Basic ' . base64_encode(implode(':', $header->getValue()));
+                continue;
+            }
+
             $headerBag = array_merge($header->getValue(), $headerBag);
         }
 
@@ -252,6 +257,7 @@ class MethodFactory
         // Setup multi-line formatting for the generated options.
         $stringify = str_replace(' ', '  ', $stringify);
         $stringify = str_replace('Bearer  ', 'Bearer ', $stringify);
+        $stringify = str_replace('Basic  ', 'Basic ', $stringify);
         $stringify = str_replace('  =>  ', ' => ', $stringify);
         $stringify = str_replace('array  (', 'array(', $stringify);
         $stringify = $this->padMultiLineString($stringify);
