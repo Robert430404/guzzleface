@@ -2,13 +2,12 @@
 
 namespace Robert430404\GuzzleFace;
 
-use Memio\Model\Phpdoc\ParameterTag;
 use ReflectionClass;
 use ReflectionException;
 use Doctrine\Common\Annotations\Reader;
 use League\Flysystem\FilesystemInterface;
 use Memio\Memio\Config\Build;
-use GuzzleHttp\{Client, ClientInterface, Exception\ClientException, Psr7\Response};
+use GuzzleHttp\{Client, ClientInterface, Psr7\Response};
 use Robert430404\GuzzleFace\Contexts\ClassContext;
 use Robert430404\GuzzleFace\Exceptions\{InvalidClientInterfaceProvidedException, NoBodyTypeProvidedException};
 use Robert430404\GuzzleFace\Factories\{ConfigFactory, FileFactory, MethodFactory};
@@ -33,11 +32,6 @@ class ClientBuilder
     private $clientWriter;
 
     /**
-     * @var array
-     */
-    private $configOverrides;
-
-    /**
      * @var bool
      */
     private $cache = false;
@@ -47,16 +41,13 @@ class ClientBuilder
      *
      * @param Reader $reader
      * @param FilesystemInterface $clientWriter
-     * @param array $configOverrides
      */
     public function __construct(
         Reader $reader,
-        FilesystemInterface $clientWriter,
-        array $configOverrides = []
+        FilesystemInterface $clientWriter
     ) {
         $this->reader = $reader;
         $this->clientWriter = $clientWriter;
-        $this->configOverrides = $configOverrides;
     }
 
     /**
@@ -79,14 +70,18 @@ class ClientBuilder
      * @param string $clientName
      * @param string $clientNamespace
      *
+     * @param array $configOverrides
      * @return ClientInterface
      *
      * @throws InvalidClientInterfaceProvidedException
-     * @throws ReflectionException
      * @throws NoBodyTypeProvidedException
+     * @throws ReflectionException
      */
-    public function buildClient(string $clientName, string $clientNamespace): ClientInterface
-    {
+    public function buildClient(
+        string $clientName,
+        string $clientNamespace,
+        array $configOverrides = []
+    ): ClientInterface {
         if (!interface_exists($clientName)) {
             throw new InvalidClientInterfaceProvidedException(
                 "You did not provide an auto loaded client interface: {$clientName}."
@@ -96,7 +91,7 @@ class ClientBuilder
         $classContext = new ClassContext($clientName, $clientNamespace);
 
         if ($this->shouldPullFromCache($classContext)) {
-            return $classContext->getNewInstance($this->configOverrides);
+            return $classContext->getNewInstance($configOverrides);
         }
 
         $classAnnotations = $this->reader->getClassAnnotations(
@@ -148,7 +143,7 @@ class ClientBuilder
                 Build::prettyPrinter()->generateCode($file)
             );
 
-        return $classContext->getNewInstance($this->configOverrides);
+        return $classContext->getNewInstance($configOverrides);
     }
 
     /**

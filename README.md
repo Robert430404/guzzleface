@@ -13,6 +13,5 @@ complete outline as to what your clients do.
 
 ## Using The Library
 
-It is currently under active development, and once it is complete this section will
-link out to the documentation for the annotations, and generation portions of the
-code.
+There is documentation covering building your clients with the annotations using the
+client builder. [You can find the documentation here.](./docs/GuzzleFace/index.md)

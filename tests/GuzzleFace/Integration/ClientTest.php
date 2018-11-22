@@ -55,15 +55,16 @@ class ClientTest extends AbstractBaseTestCase
         $handler = HandlerStack::create($mock);
 
         // Hand everything to the builder.
-        $builder = new ClientBuilder(new AnnotationReader(), $fileSystem, [
-            'handler' => $handler
-        ]);
+        $builder = new ClientBuilder(new AnnotationReader(), $fileSystem);
 
         $this->client = $builder
             ->cache(true)
             ->buildClient(
                 FixtureClientInterface::class,
-                'Robert430404\\GuzzleFace\\Tests\\Integration\\Generated'
+                'Robert430404\\GuzzleFace\\Tests\\Integration\\Generated',
+                [
+                    'handler' => $handler
+                ]
             );
     }
 
