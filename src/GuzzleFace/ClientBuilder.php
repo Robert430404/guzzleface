@@ -7,7 +7,7 @@ use ReflectionException;
 use Doctrine\Common\Annotations\Reader;
 use League\Flysystem\FilesystemInterface;
 use Memio\Memio\Config\Build;
-use GuzzleHttp\{Client, ClientInterface, Psr7\Response};
+use GuzzleHttp\{Client, ClientInterface, Exception\ClientException, Psr7\Response};
 use Robert430404\GuzzleFace\Contexts\ClassContext;
 use Robert430404\GuzzleFace\Exceptions\{InvalidClientInterfaceProvidedException, NoBodyTypeProvidedException};
 use Robert430404\GuzzleFace\Factories\{ConfigFactory, FileFactory, MethodFactory};
@@ -98,7 +98,7 @@ class ClientBuilder
         $imports = [
             Client::class,
             Response::class,
-            $clientName,
+            $clientName
         ];
 
         $implements = [

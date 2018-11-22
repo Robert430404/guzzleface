@@ -2,8 +2,14 @@
 
 namespace Robert430404\GuzzleFace\Factories;
 
+use GuzzleHttp\Exception\GuzzleException;
 use Memio\Model\Argument;
 use Memio\Model\Method;
+use Memio\Model\Phpdoc\Description;
+use Memio\Model\Phpdoc\MethodPhpdoc;
+use Memio\Model\Phpdoc\ParameterTag;
+use Memio\Model\Phpdoc\ReturnTag;
+use Memio\Model\Phpdoc\ThrowTag;
 use Robert430404\GuzzleFace\Annotations\Action;
 use Robert430404\GuzzleFace\Annotations\Request\Headers;
 use Robert430404\GuzzleFace\Enumerations\BodyEnumerations;
@@ -68,6 +74,15 @@ class MethodFactory
         $stringClientConfig = $this->stringifyOptions($this->clientConfig);
 
         $methods[] = (new Method('__construct'))
+            ->setPhpdoc(
+                (new MethodPhpdoc())
+                    ->setDescription(
+                        (new Description('Creates new client instance.'))
+                    )
+                    ->addParameterTag(
+                        (new ParameterTag('array', 'config', 'client configuration'))
+                    )
+            )
             ->addArgument(new Argument('array', 'config = []'))
             ->setBody(
                 $this->padBody("parent::__construct(array_merge({$stringClientConfig}, \$config));")
@@ -96,13 +111,25 @@ class MethodFactory
                 $requestHeaders = $this->buildRequestHeaders($headers);
             }
 
-            $classMethod = new Method($reflectionMethod->getName());
+            $methodDoc = (new MethodPhpdoc())
+                ->setDescription(
+                    (new Description("Performs the {$reflectionMethod->getName()} call"))
+                )
+                ->addThrowTag(
+                    (new ThrowTag('\\' . GuzzleException::class))
+                )
+                ->setReturnTag(
+                    new ReturnTag(
+                        '\\' . $reflectionMethod->getReturnType()->getName()
+                    )
+                );
 
-            $classMethod->setReturnType(
-                $reflectionMethod->getReturnType()->getName()
-            );
+            $classMethod = (new Method($reflectionMethod->getName()))
+                ->setReturnType(
+                    $reflectionMethod->getReturnType()->getName()
+                );
 
-            $this->buildParameters($classMethod, $reflectionMethod->getParameters());
+            $this->buildParameters($classMethod, $reflectionMethod->getParameters(), $methodDoc);
 
             // Merge all of the different request options together.
             $requestOptions = array_merge(
@@ -114,7 +141,7 @@ class MethodFactory
             // Stringify the options for use in the method body.
             $stringOptions = $this->stringifyOptions($requestOptions);
 
-            $methods[] = $classMethod->setBody(
+            $methods[] = $classMethod->setPhpdoc($methodDoc)->setBody(
                 $this->padBody(
                     "return \$this->request('{$action->getMethod()}', \"{$action->getEndpoint()}\", {$stringOptions});"
                 )
@@ -132,9 +159,16 @@ class MethodFactory
      *
      * @return void
      */
-    private function buildParameters(Method $classMethod, array $reflectionParameters): void
+    private function buildParameters(Method $classMethod, array $reflectionParameters, MethodPhpdoc $methodDoc): void
     {
         foreach ($reflectionParameters as $parameter) {
+            $methodDoc->addParameterTag(
+                new ParameterTag(
+                    $parameter->getType()->getName(),
+                    $parameter->getName()
+                )
+            );
+
             $classMethod->addArgument(
                 new Argument(
                     $parameter->getType()->getName(),
