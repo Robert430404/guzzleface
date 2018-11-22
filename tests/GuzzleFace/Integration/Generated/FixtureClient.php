@@ -26,8 +26,8 @@ class FixtureClient extends Client implements FixtureClientInterface
             'base_uri' => 'http://localhost:8080',
             'api_name' => 'Fixture  Client',
             'auth' => array(
-                'username' => 'test',
-                'password' => 'test',
+                'test',
+                'test',
             ),
             'headers' => array(
                 'Authorization' => 'Bearer test-token-here',
@@ -50,13 +50,9 @@ class FixtureClient extends Client implements FixtureClientInterface
     {
         return $this->request('GET', "/resource", array(
             'headers' => array(
-                array(
-                    'username' => 'override',
-                    'password' => 'override',
-                ),
-                array(
-                    'x-override' => 'test',
-                ),
+                'x-override' => 'test',
+                'override',
+                'override',
             ),
         ));
     }
@@ -75,15 +71,9 @@ class FixtureClient extends Client implements FixtureClientInterface
         return $this->request('POST', "/resource", array(
             'body' => $body,
             'headers' => array(
-                array(
-                    'Authorization' => 'Bearer robs-test-token',
-                ),
-                array(
-                    'x-override' => 'test',
-                ),
-                array(
-                    'User-Agent' => 'test-agent',
-                ),
+                'User-Agent' => 'test-agent',
+                'x-override' => 'test',
+                'Authorization' => 'Bearer robs-test-token',
             ),
         ));
     }

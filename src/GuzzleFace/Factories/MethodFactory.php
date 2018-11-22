@@ -220,7 +220,7 @@ class MethodFactory
         $headerBag = [];
 
         foreach ($headers->getHeaders() as $header) {
-            $headerBag[] = $header->getValue();
+            $headerBag = array_merge($header->getValue(), $headerBag);
         }
 
         return [ConfigurationEnumerations::HEADER_CONFIG_KEY => $headerBag];

@@ -54,8 +54,8 @@ class AuthBasic extends Annotation implements ConfigurationAnnotationInterface
     public function getValue()
     {
         return [
-            'username' => $this->getUsername(),
-            'password' => $this->getPassword(),
+            $this->getUsername(),
+            $this->getPassword(),
         ];
     }
 

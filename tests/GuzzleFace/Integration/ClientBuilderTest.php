@@ -2,7 +2,7 @@
 
 namespace Robert430404\GuzzleFace\Tests;
 
-use Doctrine\Common\Annotations\{AnnotationReader, AnnotationRegistry};
+use Doctrine\Common\Annotations\AnnotationReader;
 use GuzzleHttp\ClientInterface;
 use League\Flysystem\{Adapter\Local, FileNotFoundException, Filesystem};
 use ReflectionException;
@@ -36,9 +36,6 @@ class ClientBuilderTest extends AbstractBaseTestCase
     public function setUp()
     {
         parent::setUp();
-
-        // Enable Composer Autoloading Of Annotations While We Test
-        AnnotationRegistry::registerLoader('class_exists');
 
         $this->filesystem = $fileSystem = new Filesystem(
             new Local(__DIR__ . '/Generated')
