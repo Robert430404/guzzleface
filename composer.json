@@ -3,7 +3,7 @@
   "description": "This is a library that helps you write guzzle clients using an OpenFeign like interface.",
   "type": "library",
   "require": {
-    "guzzlehttp/guzzle": "^6.3",
+    "guzzlehttp/guzzle": "^7.0",
     "doctrine/annotations": "^1.6",
     "memio/memio": "^2.0",
     "league/flysystem": "^1.0",
