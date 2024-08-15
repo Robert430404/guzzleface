@@ -5,7 +5,7 @@
   "require": {
     "guzzlehttp/guzzle": "^6.3",
     "doctrine/annotations": "^1.6",
-    "memio/memio": "^2.0",
+    "memio/memio": "^3.0",
     "league/flysystem": "^1.0",
     "ext-json": "*"
   },
