@@ -4,7 +4,7 @@
   "type": "library",
   "require": {
     "guzzlehttp/guzzle": "^6.3",
-    "doctrine/annotations": "^1.6",
+    "doctrine/annotations": "^2.0",
     "memio/memio": "^2.0",
     "league/flysystem": "^1.0",
     "ext-json": "*"
